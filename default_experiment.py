@@ -2,6 +2,7 @@
 # bibliotecas básicas para manipulação de dados e valores numéricos
 import pandas as pd
 import numpy as np
+import random
 
 # algoritmos de Machine Learning
 from sklearn.neighbors import KNeighborsClassifier
@@ -14,11 +15,15 @@ from sklearn.tree import DecisionTreeClassifier
 
 # bibliotecas de pipeline do scikit-learn, pré-processamento de dados e métricas de desempenho
 from sklearn.preprocessing import MinMaxScaler, FunctionTransformer
-from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.base import BaseEstimator, TransformerMixin, clone
 from sklearn.pipeline import Pipeline, FeatureUnion
 from sklearn.impute import SimpleImputer, KNNImputer
 from sklearn.model_selection import StratifiedKFold
 from sklearn import metrics
+
+import os
+
+from tqdm import tqdm
 
 # sementes aleatórias
 seeds = [3, 5, 7, 13, 27, 35, 42, 66, 72, 111]
@@ -74,19 +79,21 @@ class RemoveCorrelatedFeatures(BaseEstimator, TransformerMixin):
 
     def remove_corr_features(self):
         # percorre a lista de tuplas
-        for tuple in self.tuple_corr_features:
+        for pair in self.tuple_corr_features:
             # salva o valor de correlação de cada feature de cada tupla em relação à target
-            list = [abs(self.corr_matrix.values[i][len(self.data.columns) - 1]) for i in tuple]
+            list_corr = [abs(self.corr_matrix.values[i][len(self.data.columns) - 1]) for i in pair]
 
             # identifica a feature da tupla correlacionada que possui menor correlação com a target e ainda não foi removida
-            if list[0] < list[1] and not tuple[0] in self.removed_corr_features:
-                self.removed_corr_features.append(tuple[0])
-            elif not tuple[1] in self.removed_corr_features:
-                self.removed_corr_features.append(tuple[1])
+            if list_corr[0] <= list_corr[1] and not self.data.columns[pair[0]] in self.removed_corr_features:
+                # adiciona na lista de features a serem removidas
+                self.removed_corr_features.append(self.data.columns[pair[0]])
+            elif list_corr[1] < list_corr[0] and not self.data.columns[pair[1]] in self.removed_corr_features:
+                # adiciona na lista de features a serem removidas
+                self.removed_corr_features.append(self.data.columns[pair[1]])
 
         if self.removed_corr_features:
             # remove features correlacionadas 
-            self.data.drop(self.data.columns[self.removed_corr_features], axis = 1, inplace = True) 
+            self.data.drop(self.removed_corr_features, axis = 1, inplace = True) 
     
     def fit(self, X, y):
         # cria um dataframe a partir dos valores de X e y recebidos
@@ -110,11 +117,11 @@ class RemoveCorrelatedFeatures(BaseEstimator, TransformerMixin):
 
         # percorre a lista de features correlacionadas a serem removidas
         if self.removed_corr_features:
+            cols_to_drop = [c for c in self.removed_corr_features if c in X.columns]
             # remove features correlacionadas 
-            X = X.drop(X.columns[self.removed_corr_features], axis = 1) 
+            X = X.drop(cols_to_drop, axis = 1) 
 
-        return X
-    
+        return X   
 
 # %%
 class RemoveMissingValues(BaseEstimator, TransformerMixin):
@@ -150,10 +157,9 @@ class RemoveMissingValues(BaseEstimator, TransformerMixin):
         X = X.drop(self.features_missing_values, axis = 1)
 
         # se existir alguma feature com valor faltante no teste que não foi identificada no treinamento, substitui os valores faltantes por -3
-        X.fillna(-3)
+        X = X.fillna(-3)
 
         return X
-
 
 # %%
 def identifyGroupMissingValues(X, y=None):
@@ -184,14 +190,16 @@ def write_csv_result(tipo_experimento, file, bool_missing_value, abordagem_missi
         # não foi utilizada nenhuma abordagem para tratar valores faltantes
         abordagem_missing_value = None
 
+    os.makedirs('resultados/' + tipo_experimento, exist_ok = True)
+
     with open('resultados/' + tipo_experimento + '/' + file + '_' + str(abordagem_missing_value) + '_' + algoritmo + '_' + str(threshold).replace(".", "_") + '.csv', 'a') as f:
         # se estiver na primeira seed e na primeira iteração da validação cruzada
         if seed == seeds[0] and counter == 0:
             # escreve o cabeçalho do arquivo
-            f.write("seed,iteracao_validacao_cruzada,indices,previsoes,f1_score,acuracia_balanceada, auc\n")
+            f.write("seed;iteracao_validacao_cruzada;indices;previsoes;f1_score;acuracia_balanceada;auc\n")
 
         # resultados obtidos por seed e iteração
-        f.write(",".join([str(seed), str(counter), str(test_idx), str(resultados), str(f1_score), str(acc_balanceada), str(auc_score)]) + "\n")
+        f.write(";".join([str(seed), str(counter), str(test_idx), str(resultados), str(f1_score), str(acc_balanceada), str(auc_score)]) + "\n")
 
 # %%
 def identify_analized_features(pipeline, bool_missing_value, approach, algorithm):
@@ -218,19 +226,20 @@ def identify_analized_features(pipeline, bool_missing_value, approach, algorithm
 
     return None, None
     
-
 # %%
-def write_csv_features_analisadas(tipo_experimento, file, threshold, features_nao_correlacionadas, features_missing_values, bool_missing_value, seed, counter):
+def write_csv_analyzed_features(tipo_experimento, file, threshold, features_nao_correlacionadas, features_missing_values, bool_missing_value, seed, counter):
     # se tiver features não correlacionadas para analisar
     if features_nao_correlacionadas != None:
+        os.makedirs('resultados/' + tipo_experimento + '/features/', exist_ok = True)
+
         with open('resultados/' + tipo_experimento + '/features/' + file + str(threshold).replace(".", "_") + '.csv', 'a') as f:
              # se estiver na primeira seed e na primeira iteração da validação cruzada
             if seed == seeds[0] and counter == 0:
                 # escreve cabeçalho do arquivo
-                f.write("seed,iteracao_validacao_cruzada,features_nao_correlacionadas,features_missing_values\n")
+                f.write("seed;iteracao_validacao_cruzada;features_nao_correlacionadas;features_missing_values\n")
 
             # escreve resultado obtido
-            f.write(",".join([str(seed), str(counter), str(features_nao_correlacionadas), str(features_missing_values)]) + "\n")
+            f.write(";".join([str(seed), str(counter), str(features_nao_correlacionadas), str(features_missing_values)]) + "\n")
 
 # %%
 # abordagens de tratamento de valores faltantes aplicadas aos dados
@@ -240,16 +249,16 @@ approach_missing_values = {"remove_missing_values": RemoveMissingValues(), "impu
 corr_threshold = [0.8, 0.85, 0.9, 0.95]
 
 # algoritmos de Machine Learning utilizados no experimento
-algorithms = {"NB": GaussianNB(), "DT": DecisionTreeClassifier(random_state = 42), "KNN": KNeighborsClassifier(), "RF": RandomForestClassifier(random_state = 42), "SVM_RBF": SVC(kernel = "rbf", random_state = 42), "SVM_LIN": SVC(kernel = 'linear', random_state = 42), "LogisticRegression": LogisticRegression(random_state = 42), "XGBoost": XGBClassifier(random_state = 42)}
+algorithms = {"NB": GaussianNB(), "DT": DecisionTreeClassifier(), "KNN": KNeighborsClassifier(), "RF": RandomForestClassifier(), "SVM_RBF": SVC(kernel = "rbf", probability = True), "SVM_LIN": SVC(kernel = 'linear', probability = True), "LogisticRegression": LogisticRegression(), "XGBoost": XGBClassifier()}
 
 # %%
 # métricas calculadas para análise de resultados
-def calculate_metrics(y, predict):
+def calculate_metrics(y, predict, positive_proba):
     f1 = metrics.f1_score(y, predict)
 
     balanced_acc = metrics.balanced_accuracy_score(y, predict)
     
-    fpr, tpr, thresholds = metrics.roc_curve(np.array(y), np.array(predict))
+    fpr, tpr, thresholds = metrics.roc_curve(np.array(y), positive_proba)
     auc_score = metrics.auc(fpr, tpr)
 
     return f1, balanced_acc, auc_score
@@ -259,7 +268,7 @@ def create_preprocessor(bool_missing_value, threshold_corr, approach_missing_val
     # se tiver valores faltantes
     if bool_missing_value:
         # cria um pipeline de preprocessamento considerando a etapa de tratamento de valores faltantes
-        preprocessor = Pipeline([('constant_values', RemoveConstantValues()), ('missing_values', approach_missing_values[approach_missing_value]), ('correlated_features', RemoveCorrelatedFeatures(threshold_corr)), ('scaler', MinMaxScaler())])
+        preprocessor = Pipeline([('constant_values', RemoveConstantValues()), ('missing_values', clone(approach_missing_values[approach_missing_value])), ('correlated_features', RemoveCorrelatedFeatures(threshold_corr)), ('scaler', MinMaxScaler())])
 
         # se a abordagem de valores faltantes for criar features que identifiquem erros em categorias específicas de ELA
         if approach_missing_value == "set_ela_error":
@@ -282,14 +291,16 @@ def create_preprocessor(bool_missing_value, threshold_corr, approach_missing_val
 
 # %%
 def create_pipeline(preprocessor, algorithm, seed):
+    estimator = clone(algorithms[algorithm])
+
     try: 
         # define a seed do algoritmo de machine learning se ele for estocástico
-        algorithms[algorithm].set_params(random_state = seed)
+        estimator.set_params(random_state = seed)
     except:
         pass
 
     # cria pipeline com preprocessamento e estimador
-    return Pipeline([('preprocessing', preprocessor), ('model', algorithms[algorithm])])
+    return Pipeline([('preprocessing', preprocessor), ('model', estimator)])
 
 # %%
 # percorre cada dataset
@@ -305,7 +316,7 @@ for f in files:
     y = y.map({'Defaults': 0, 'Tuning': 1}).astype(int)
 
     # verifica se existe valores faltantes no dataset
-    bool_missing_value = np.array(X.isna().astype(int)).sum()
+    bool_missing_value = X.isna().any().any()
 
     # para cada algoritmo de Machine Learning
     for algorithm in algorithms:
@@ -314,7 +325,10 @@ for f in files:
             # para cada abordagem de tratamento de valores faltantes
             for approach in approach_missing_values: 
                 # para cada seed em um conjunto de 10
-                for seed in seeds:
+                for seed in tqdm(seeds, desc = f"{f} | {algorithm} | thr = {threshold} | {approach}"):
+                    random.seed(seed)
+                    np.random.seed(seed)
+
                     # cria o preprocessador de dados
                     preprocessor = create_preprocessor(bool_missing_value, threshold, approach)
 
@@ -336,23 +350,25 @@ for f in files:
                         # realiza a predição
                         y_predict = pipeline.predict(X_test)
 
+                        y_proba = pipeline.predict_proba(X_test)
+                        
+                        positive_proba = y_proba[:, 1]
+
                         # analisa as features com missing values e as features não correlacionadas
                         features_missing_values, not_corr_features = identify_analized_features(pipeline, bool_missing_value, approach, algorithm)
 
                         # calcula as métricas de desempenho
-                        f1, balanced_acc, auc_score = calculate_metrics(y_test, y_predict)
+                        f1, balanced_acc, auc_score = calculate_metrics(y_test, y_predict, positive_proba)
 
                         # mapeia os valores previstos para as labels originais da target
                         predict = pd.Series(y_predict).map({0: 'Defaults', 1: 'Tuning'}).astype(object)
 
                         # escreve resultados finais
-                        write_csv_result("default", f, bool_missing_value, approach, algorithm, threshold, list(idx[1]), list(predict), f1, balanced_acc, auc_score, seed, counter)
-                        write_csv_features_analisadas("default", f, threshold, not_corr_features, features_missing_values, bool_missing_value, seed, counter)
+                        write_csv_result("default", f, bool_missing_value, approach, algorithm, threshold, list(pd.Series(idx[1]).astype(int)), list(predict), f1, balanced_acc, auc_score, seed, counter)
+                        write_csv_analyzed_features("default", f, threshold, not_corr_features, features_missing_values, bool_missing_value, seed, counter)
 
                 # se o dataset não tiver valores faltantes
                 if not bool_missing_value:
                     # não percorre todas as abordagens de tratamento de valores faltantes
                     break
                     
-
-
