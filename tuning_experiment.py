@@ -40,7 +40,7 @@ search_space = []
 
 # %%
 # datasets
-files = ['classif_svm_169d_95_average']
+files = ['ela_features_flacco', 'ela_svm_metadataset', 'classif_svm_169d_95_average']
 
 # %%
 class RemoveConstantValues(BaseEstimator, TransformerMixin):
@@ -260,7 +260,7 @@ approach_missing_values = {"remove_missing_values": RemoveMissingValues(), "impu
 corr_threshold = [0.8, 0.85, 0.9, 0.95]
 
 # algoritmos de Machine Learning utilizados no experimento
-algorithms = {"XGBoost": XGBClassifier()}
+algorithms = {"NB": GaussianNB(), "DT": DecisionTreeClassifier(), "KNN": KNeighborsClassifier(), "RF": RandomForestClassifier(), "SVM_RBF": SVC(kernel = "rbf", probability = True), "SVM_LIN": SVC(kernel = 'linear', probability = True), "LogisticRegression": LogisticRegression(), "XGBoost": XGBClassifier()}
 
 # %%
 # métricas calculadas para análise de resultados
