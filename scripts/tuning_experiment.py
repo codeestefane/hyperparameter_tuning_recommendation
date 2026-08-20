@@ -41,7 +41,7 @@ search_space = []
 
 # %%
 # datasets
-files = ['ela_features_flacco', 'ela_svm_metadataset', 'classif_svm_169d_95_average']
+files = ['ela_features_flacco', 'classif_svm_169d_95_average', 'classif_svm_ela_features_flacco']
 
 # %%
 # pré-processamento: remoção de features com valores constantes que não agregam informações significativas para o modelo
