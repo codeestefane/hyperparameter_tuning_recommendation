@@ -27,7 +27,7 @@ O repositório reúne uma implementação reproduzível para comparar configura�
 └── requirements.txt          # Dependências Python fixadas
 ```
 
-Os scripts esperam ser executados a partir da raiz do repositório, pois usam caminhos relativos como `datasets/<arquivo>.csv` e `resultados/<experimento>/`.
+Os scripts esperam ser executados a partir da raiz do repositório, pois usam caminhos relativos como `./datasets/<arquivo>.csv` e `./resultados/<experimento>/`.
 
 ## Requisitos
 
