@@ -1,8 +1,8 @@
 import pandas as pd
 
-dataframe = pd.read_csv("datasets/classif_svm_169d_95_average.csv")
+dataframe = pd.read_csv("../datasets/classif_svm_169d_95_average.csv")
 
-dataframe_2 = pd.read_csv("datasets/ela_features_flacco.csv")
+dataframe_2 = pd.read_csv("../datasets/ela_features_flacco.csv")
 
 buffer = pd.DataFrame(columns = dataframe_2.columns)
 
@@ -17,4 +17,4 @@ dataframe.drop("Class", axis = 1, inplace = True)
 
 dataset_combinado = pd.concat([dataframe, dataframe_2], axis = 1)
 
-dataset_combinado.to_csv("datasets/classif_svm_ela_features_flacco.csv", index = False)
+dataset_combinado.to_csv("../datasets/classif_svm_ela_features_flacco.csv", index = False)

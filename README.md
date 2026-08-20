@@ -21,13 +21,14 @@ O repositório reúne uma implementação reproduzível para comparar configura�
 ├── datasets/                 # Meta-datasets usados pelos scripts
 ├── scripts/
 │   ├── default_experiment.py # Execução com parâmetros padrão
-│   └── tuning_experiment.py  # Execução com tuning bayesiano
+│   ├── tuning_experiment.py  # Execução com tuning bayesiano
+│   ├── generate_combined_metadataset.py # Geração do dataset combinado
+│   └── results.ipynb          # Análise dos resultados do experimento padrão
 ├── resultados/               # CSVs de resultados e features analisadas
-├── results.ipynb             # Exploração e análise dos resultados
 └── requirements.txt          # Dependências Python fixadas
 ```
 
-Os scripts esperam ser executados a partir da raiz do repositório, pois usam caminhos relativos como `./datasets/<arquivo>.csv` e `./resultados/<experimento>/`.
+Os scripts e o notebook usam caminhos relativos com `..`, como `../datasets/<arquivo>.csv` e `../resultados/<experimento>/`. Por isso, os comandos devem ser executados com `scripts/` como diretório de trabalho.
 
 ## Requisitos
 
@@ -59,49 +60,63 @@ python -m pip install -r requirements.txt
 
 ### Experimento padrão
 
-Com o ambiente virtual ativado e estando na raiz do projeto:
+Com o ambiente virtual ativado, a partir da raiz do projeto:
 
-```bash
-python scripts/default_experiment.py
+```powershell
+cd scripts
+python default_experiment.py
 ```
 
 O script percorre os datasets configurados em `scripts/default_experiment.py`, os algoritmos, os limiares `0.8`, `0.85`, `0.9` e `0.95`, as estratégias aplicáveis de valores ausentes e as 10 sementes. Os arquivos são criados ou atualizados em `resultados/default/`, incluindo CSVs de métricas e de features analisadas.
 
 ### Experimento com tuning
 
-```bash
-python scripts/tuning_experiment.py
+```powershell
+cd scripts
+python tuning_experiment.py
 ```
 
-O script usa `scikit-optimize` para otimizar os hiperparâmetros de cada algoritmo e grava os resultados em `resultados/tuning/`.
+O script usa `scikit-optimize` para otimizar os hiperparâmetros de cada algoritmo e grava os resultados em `resultados/tuning/`. Os arquivos detalhados são criados em `resultados/tuning/resultados_combinacoes/` e `resultados/tuning/features/` após a execução. O tuning usa os mesmos três datasets listados na seção de dados de entrada e, no código atual, não inclui o algoritmo Naive Bayes.
 
-Os arquivos detalhados ficam em `resultados/tuning/resultados_combinacoes/` e `resultados/tuning/features/`. O tuning usa os mesmos tres datasets listados na secao de dados de entrada.
+### Geração do dataset combinado
+
+O arquivo `datasets/classif_svm_ela_features_flacco.csv` combina informações de `classif_svm_169d_95_average.csv` e `ela_features_flacco.csv`. O gerador usa os mesmos caminhos relativos dos scripts de experimento e deve ser executado com `scripts/` como diretório de trabalho:
+
+```powershell
+cd scripts
+python generate_combined_metadataset.py
+```
+
+Esse comando sobrescreve o arquivo combinado em `../datasets/classif_svm_ela_features_flacco.csv`.
 
 ### Análise em notebook
 
-Para executar as versões interativas e visualizar as análises:
+Para visualizar a análise dos resultados do experimento padrão:
 
-```bash
+```powershell
+cd scripts
 jupyter lab
 ```
 
-Abra `results.ipynb` para explorar os CSVs gerados. Os experimentos executáveis nesta cópia do projeto estão nos scripts Python; mantenha o diretório de trabalho do notebook na raiz para preservar os caminhos relativos.
+Abra `scripts/results.ipynb` para explorar os CSVs gerados. O notebook lê os resultados de `../resultados/default/` e grava o resumo em `../resultados/default/resumo_resultado_default.csv`.
 
 ## Dados de entrada
 
 Os scripts leem CSVs separados por vírgula em `datasets/`. Cada dataset deve conter uma coluna identificadora na primeira posição, as features entre a primeira e a última coluna e a variável-alvo na última coluna. Os valores esperados para a variável-alvo são `Defaults` e `Tuning`; eles são convertidos internamente para `0` e `1`.
 
-Os arquivos atualmente usados pelo experimento padrão são:
+Os arquivos atualmente usados pelos dois experimentos são:
 
 - `ela_features_flacco.csv`;
 - `classif_svm_169d_95_average.csv`;
 - `classif_svm_ela_features_flacco.csv`.
 
+O terceiro arquivo pode ser recriado pelo script `scripts/generate_combined_metadataset.py`.
+
 ## Resultados
 
-Os CSVs de métricas registram, por configuração, a semente, a iteração da validação cruzada, os índices de teste, as previsões, o F1-score, a acurácia balanceada e a AUC. Os arquivos em `resultados/*/features/` registram as features não correlacionadas e, quando aplicável, as features com valores ausentes identificadas durante o pré-processamento.
+Os CSVs de métricas usam `;` como separador e registram, por configuração, a semente, a iteração da validação cruzada, os índices de teste, as previsões, o F1-score, a acurácia balanceada e a AUC. Os arquivos em `resultados/*/features/` registram as features não correlacionadas e, quando aplicável, as features com valores ausentes identificadas durante o pré-processamento.
 
-Os notebooks de resultados podem ser usados para consolidar e visualizar esses arquivos sem alterar os dados de entrada.
+Atualmente, o repositório contém resultados do experimento padrão em `resultados/default/`, incluindo `resumo_resultado_default.csv`. Os resultados de tuning só passam a existir em `resultados/tuning/` depois que o script correspondente é executado.
 
 ## Desenvolvimento
 
