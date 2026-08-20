@@ -75,6 +75,8 @@ python scripts/tuning_experiment.py
 
 O script usa `scikit-optimize` para otimizar os hiperparâmetros de cada algoritmo e grava os resultados em `resultados/tuning/`.
 
+Os arquivos detalhados ficam em `resultados/tuning/resultados_combinacoes/` e `resultados/tuning/features/`. O tuning usa os mesmos tres datasets listados na secao de dados de entrada.
+
 ### Análise em notebook
 
 Para executar as versões interativas e visualizar as análises:
