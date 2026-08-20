@@ -181,9 +181,9 @@ def write_csv_result(tipo_experimento, file, bool_missing_value, abordagem_missi
         # não foi utilizada nenhuma abordagem para tratar valores faltantes
         abordagem_missing_value = None
 
-    os.makedirs('./resultados/' + tipo_experimento + '/resultados_combinacoes/', exist_ok = True)
+    os.makedirs('../resultados/' + tipo_experimento + '/resultados_combinacoes/', exist_ok = True)
 
-    with open('./resultados/' + tipo_experimento + '/resultados_combinacoes/' + file + '_' + str(abordagem_missing_value) + '_' + algoritmo + '_' + str(threshold).replace(".", "_") + '.csv', 'a') as f:
+    with open('../resultados/' + tipo_experimento + '/resultados_combinacoes/' + file + '_' + str(abordagem_missing_value) + '_' + algoritmo + '_' + str(threshold).replace(".", "_") + '.csv', 'a') as f:
         # se estiver na primeira seed e na primeira iteração da validação cruzada
         if seed == seeds[0] and counter == 0:
             # escreve o cabeçalho do arquivo
@@ -221,9 +221,9 @@ def identify_analized_features(pipeline, bool_missing_value, approach, algorithm
 def write_csv_analyzed_features(tipo_experimento, file, threshold, features_nao_correlacionadas, features_missing_values, bool_missing_value, seed, counter):
     # se tiver features não correlacionadas para analisar
     if features_nao_correlacionadas != None:
-        os.makedirs('./resultados/'+ tipo_experimento + '/features/', exist_ok = True)
+        os.makedirs('../resultados/'+ tipo_experimento + '/features/', exist_ok = True)
 
-        with open('./resultados/' + tipo_experimento + '/features/' + file + str(threshold).replace(".", "_") + '.csv', 'a') as f:
+        with open('../resultados/' + tipo_experimento + '/features/' + file + str(threshold).replace(".", "_") + '.csv', 'a') as f:
              # se estiver na primeira seed e na primeira iteração da validação cruzada
             if seed == seeds[0] and counter == 0:
                 # escreve cabeçalho do arquivo
@@ -296,7 +296,7 @@ def create_pipeline(preprocessor, algorithm, seed):
 # %%
 # para cada dataset
 for f in files:
-    data = pd.read_csv("./datasets/" + f + ".csv")
+    data = pd.read_csv("../datasets/" + f + ".csv")
 
     # separa features de interesse (exclui coluna de identificadores)
     X = data.iloc[:, 1:-1].copy()
