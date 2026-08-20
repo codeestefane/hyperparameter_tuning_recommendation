@@ -1,4 +1,4 @@
-# Experimentos de classificação com features ELA
+# Experimentos de Meta-learning com features ELA
 
 Este projeto avalia classificadores de machine learning aplicados a meta-datasets com features de *Exploratory Landscape Analysis* (ELA). O objetivo é investigar a classificação das instâncias nas classes `Defaults` e `Tuning` usando diferentes conjuntos de features, estratégias de tratamento de valores ausentes e limiares para remoção de features correlacionadas.
 
