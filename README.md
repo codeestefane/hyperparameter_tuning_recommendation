@@ -1,123 +1,206 @@
-# Experimentos de classificação com features ELA
+# Experimento ELA + metadatasets para classificação
 
-Este projeto avalia classificadores de machine learning aplicados a meta-datasets com features de *Exploratory Landscape Analysis* (ELA). O objetivo é investigar a classificação das instâncias nas classes `Defaults` e `Tuning` usando diferentes conjuntos de features, estratégias de tratamento de valores ausentes e limiares para remoção de features correlacionadas.
+Este projeto avalia diferentes combinações de metadatasets, estratégias de tratamento de valores ausentes, limiares de correlação e algoritmos de aprendizado de máquina para classificar instâncias de tuning vs. defaults em problemas de otimização. A análise combina recursos de ELA (Evolutionary Landscape Analysis), metadados de desempenho e métricas estatísticas para comparar configurações em vários cenários.
+
+## O que o projeto faz
+
+O repositório organiza um pipeline experimental para:
+
+- carregar metadatasets de diferentes fontes;
+- remover ou tratar colunas com valores ausentes;
+- eliminar atributos constantes e altamente correlacionados;
+- normalizar features antes do treinamento;
+- avaliar modelos com validação estratificada;
+- comparar desempenho por métrica e por semente aleatória;
+- gerar resumos e gráficos de análise estatística.
+
+Os arquivos principais estão em `scripts/` e a execução principal é feita por meio de scripts separados para experimentos, agregação de métricas e análise interpretável.
 
 ## Por que este projeto é útil
 
-O repositório reúne uma implementação reproduzível para comparar configurações de classificação sob as mesmas condições experimentais:
+O projeto foi estruturado para suportar pesquisas em benchmarking de algoritmos e análise de metadados de desempenho. Ele é útil porque:
 
-- pré-processamento com remoção de features constantes e altamente correlacionadas;
-- tratamento de valores ausentes por remoção, imputação pela média, imputação KNN ou criação de indicadores de erro em grupos de features ELA;
-- comparação entre Naive Bayes, árvore de decisão, KNN, Random Forest, SVM linear, SVM com kernel RBF, regressão logística e XGBoost;
-- validação cruzada estratificada com 10 partições e 10 sementes aleatórias;
-- avaliação por F1-score, acurácia balanceada e AUC-ROC;
-- tuning de hiperparâmetros com otimização bayesiana no fluxo específico de tuning;
-- registro dos resultados por dataset, algoritmo, estratégia de valores ausentes, limiar de correlação, semente e iteração.
+- permite comparar diferentes abordagens de imputação e remoção de atributos;
+- considera vários limiares de correlação para reduzir redundância entre features;
+- executa experimentos com diversos algoritmos, incluindo SVM, k-NN, Random Forest, regressão logística, Naive Bayes, Decision Tree e XGBoost;
+- gera arquivos CSV com métricas de F1, balanced accuracy e AUC por iteração e por semente;
+- produz gráficos e análises estatísticas com Friedman + Nemenyi para comparar configurações;
+- inclui uma etapa de SHAP para interpretar o impacto das features em um modelo.
 
-## Estrutura do projeto
+Em resumo, a estrutura ajuda a reproduzir experimentos e a documentar quais combinações de preprocessing e modelo performam melhor.
+
+## Estrutura do repositório
 
 ```text
 .
-├── datasets/                 # Meta-datasets usados pelos scripts
+├── datasets/
+│   ├── classif_svm_169d_95_average.csv
+│   ├── classif_svm_ela_features_flacco.csv
+│   ├── ela_features_flacco.csv
+│   └── ...
+├── resultados/
+│   └── default/
+│       ├── features/
+│       ├── plots/
+│       ├── resultados_combinacoes/
+│       ├── resumo_resultado_default.csv
+│       └── shap_values.csv
 ├── scripts/
-│   ├── default_experiment.py # Execução com parâmetros padrão
-│   ├── tuning_experiment.py  # Execução com tuning bayesiano
-│   ├── generate_combined_metadataset.py # Geração do dataset combinado
-│   └── results.ipynb          # Análise dos resultados do experimento padrão
-├── resultados/               # CSVs de resultados e features analisadas
-└── requirements.txt          # Dependências Python fixadas
+│   ├── 01_default_experiment.py
+│   ├── 02_generate_results_resume.py
+│   ├── 03_friedman_nemenyi_tests.py
+│   ├── 04_generate_aggregate_metrics.py
+│   ├── 05_shap_analysis.py
+│   └── modules/
+│       ├── pipeline.py
+│       ├── preprocessing.py
+│       └── report_results.py
+├── requirements.txt
+└── README.md
 ```
 
-Os scripts e o notebook usam caminhos relativos com `..`, como `../datasets/<arquivo>.csv` e `../resultados/<experimento>/`. Por isso, os comandos devem ser executados com `scripts/` como diretório de trabalho.
+## Pré-requisitos
 
-## Requisitos
+Este projeto depende principalmente de:
 
-- Python compatível com as versões das dependências fixadas em `requirements.txt`;
-- ambiente virtual recomendado;
-- espaço em disco e tempo de execução suficientes para os experimentos completos. O tuning combina validação externa, validação interna e otimização de hiperparâmetros, portanto pode ser demorado.
+- Python 3.10+
+- pandas, numpy, scipy
+- scikit-learn
+- xgboost
+- shap
+- seaborn, matplotlib
+- scikit-optimize
+- scikit-posthocs
+- tqdm
 
-## Instalação
+A lista completa está em [requirements.txt](requirements.txt).
 
-No Windows PowerShell:
+## Como começar
 
-```powershell
-py -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
-```
-
-No Linux ou macOS:
+### 1) Clone o repositório
 
 ```bash
-python3 -m venv .venv
+git clone <url-do-repositorio>
+cd experimento_ela_features
+```
+
+### 2) Crie um ambiente virtual
+
+```bash
+python -m venv .venv
 source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+# no Windows PowerShell:
+# .\.venv\Scripts\Activate.ps1
 ```
 
-## Como executar
+### 3) Instale as dependências
 
-### Experimento padrão
+```bash
+pip install -r requirements.txt
+```
 
-Com o ambiente virtual ativado, a partir da raiz do projeto:
+### 4) Execute os experimentos
 
-```powershell
+Os scripts em `scripts/` usam caminhos relativos a partir da pasta `scripts` do projeto. Por isso, a execução recomendada é:
+
+```bash
 cd scripts
-python default_experiment.py
+python 01_default_experiment.py
 ```
 
-O script percorre os datasets configurados em `scripts/default_experiment.py`, os algoritmos, os limiares `0.8`, `0.85`, `0.9` e `0.95`, as estratégias aplicáveis de valores ausentes e as 10 sementes. Os arquivos são criados ou atualizados em `resultados/default/`, incluindo CSVs de métricas e de features analisadas.
+Esse script executa o experimento principal com:
 
-### Experimento com tuning
+- metadatasets: `ela_features_flacco`, `classif_svm_169d_95_average`, `classif_svm_ela_features_flacco`;
+- limiares de correlação: `0.8`, `0.85`, `0.9`, `0.95`;
+- abordagens de missing values: `remove_missing_values`, `imputer_mean`, `knn_imputer`, `set_ela_error`;
+- algoritmos: `NB`, `DT`, `KNN`, `RF`, `SVM_RBF`, `SVM_LIN`, `LogisticRegression`, `XGBoost`;
+- sementes: `[3, 5, 7, 13, 27, 35, 42, 66, 72, 111]`.
 
-```powershell
+Os resultados são salvos em `resultados/default/resultados_combinacoes/` e também em `resultados/default/features/`.
+
+### 5) Gere o resumo dos resultados
+
+```bash
 cd scripts
-python tuning_experiment.py
+python 02_generate_results_resume.py
 ```
 
-O script usa `scikit-optimize` para otimizar os hiperparâmetros de cada algoritmo e grava os resultados em `resultados/tuning/`. Os arquivos detalhados são criados em `resultados/tuning/resultados_combinacoes/` e `resultados/tuning/features/` após a execução. O tuning usa os mesmos três datasets listados na seção de dados de entrada e, no código atual, não inclui o algoritmo Naive Bayes.
+Esse passo consolida as combinações em um arquivo como:
 
-### Geração do dataset combinado
+- `resultados/default/resumo_resultado_default.csv`
 
-O arquivo `datasets/classif_svm_ela_features_flacco.csv` combina informações de `classif_svm_169d_95_average.csv` e `ela_features_flacco.csv`. O gerador usa os mesmos caminhos relativos dos scripts de experimento e deve ser executado com `scripts/` como diretório de trabalho:
+### 6) Gere testes estatísticos e gráficos
 
-```powershell
+```bash
 cd scripts
-python generate_combined_metadataset.py
+python 03_friedman_nemenyi_tests.py
 ```
 
-Esse comando sobrescreve o arquivo combinado em `../datasets/classif_svm_ela_features_flacco.csv`.
+O script aplica testes de Friedman e Nemenyi e salva diagramas críticos em `resultados/default/plots/`.
 
-### Análise em notebook
+### 7) Gere métricas agregadas
 
-Para visualizar a análise dos resultados do experimento padrão:
-
-```powershell
+```bash
 cd scripts
-jupyter lab
+python 04_generate_aggregate_metrics.py
 ```
 
-Abra `scripts/results.ipynb` para explorar os CSVs gerados. O notebook lê os resultados de `../resultados/default/` e grava o resumo em `../resultados/default/resumo_resultado_default.csv`.
+Esse script produz tabelas agregadas com métricas consolidadas para comparação entre metadatasets.
 
-## Dados de entrada
+### 8) Execute a análise SHAP
 
-Os scripts leem CSVs separados por vírgula em `datasets/`. Cada dataset deve conter uma coluna identificadora na primeira posição, as features entre a primeira e a última coluna e a variável-alvo na última coluna. Os valores esperados para a variável-alvo são `Defaults` e `Tuning`; eles são convertidos internamente para `0` e `1`.
+```bash
+cd scripts
+python 05_shap_analysis.py
+```
 
-Os arquivos atualmente usados pelos dois experimentos são:
+O arquivo gera valores SHAP e salva a visualização no diretório `resultados/default/plots/` e `resultados/default/shap_values.csv`.
 
-- `ela_features_flacco.csv`;
-- `classif_svm_169d_95_average.csv`;
-- `classif_svm_ela_features_flacco.csv`.
+## Exemplos de uso
 
-O terceiro arquivo pode ser recriado pelo script `scripts/generate_combined_metadataset.py`.
+### Executar o experimento principal
 
-## Resultados
+```bash
+cd scripts
+python 01_default_experiment.py
+```
 
-Os CSVs de métricas usam `;` como separador e registram, por configuração, a semente, a iteração da validação cruzada, os índices de teste, as previsões, o F1-score, a acurácia balanceada e a AUC. Os arquivos em `resultados/*/features/` registram as features não correlacionadas e, quando aplicável, as features com valores ausentes identificadas durante o pré-processamento.
+### Gerar resumo depois do experimento
 
-Atualmente, o repositório contém resultados do experimento padrão em `resultados/default/`, incluindo `resumo_resultado_default.csv`. Os resultados de tuning só passam a existir em `resultados/tuning/` depois que o script correspondente é executado.
+```bash
+cd scripts
+python 02_generate_results_resume.py
+```
 
-## Desenvolvimento
+### Visualizar resultados já gerados
 
-Para reproduzir ou adaptar um experimento, ajuste no script correspondente as listas de datasets, algoritmos, sementes, limiares e espaços de busca. Execute sempre a partir da raiz e confirme que os arquivos de entrada estão no caminho esperado. O projeto não inclui atualmente uma suíte de testes automatizados; a validação principal é feita pela execução dos notebooks e pela inspeção dos CSVs produzidos.
+```python
+import pandas as pd
+
+resumo = pd.read_csv('../resultados/default/resumo_resultado_default.csv', sep=';')
+print(resumo.head())
+```
+
+## Scripts relevantes
+
+- [scripts/01_default_experiment.py](scripts/01_default_experiment.py): executa o pipeline completo de avaliação.
+- [scripts/02_generate_results_resume.py](scripts/02_generate_results_resume.py): consolida métricas por combinação.
+- [scripts/03_friedman_nemenyi_tests.py](scripts/03_friedman_nemenyi_tests.py): testes estatísticos e diagramas de comparação.
+- [scripts/04_generate_aggregate_metrics.py](scripts/04_generate_aggregate_metrics.py): tabela agregada de métricas.
+- [scripts/05_shap_analysis.py](scripts/05_shap_analysis.py): análise de importância de features com SHAP.
+
+Os módulos reutilizáveis estão em:
+
+- [scripts/modules/pipeline.py](scripts/modules/pipeline.py)
+- [scripts/modules/preprocessing.py](scripts/modules/preprocessing.py)
+- [scripts/modules/report_results.py](scripts/modules/report_results.py)
+
+## Observações importantes
+
+- O projeto foi organizado para análise experimental e comparação de configurações.
+- Muitos scripts dependem de caminhos relativos e funcionam corretamente quando executados a partir da pasta `scripts/`.
+- Os arquivos gerados ficam em `resultados/default`, que é o diretório padrão para análise do experimento.
+
+## Contribuição
+
+Para contribuir com melhorias, mantenha o mesmo padrão de organização do projeto e valide os scripts antes de enviar alterações. Em geral, mudanças em preprocessing, métricas ou análise estatística devem ser acompanhadas de execução local dos scripts relevantes para garantir a reprodução dos resultados.
