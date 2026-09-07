@@ -2,7 +2,7 @@
 
 # Experimentos de Meta-learning com features ELA
 
-Este projeto avalia diferentes combinações de metadatasets, estratégias de tratamento de valores ausentes, limiares de correlação e algoritmos de aprendizado de máquina para classificar instâncias de tuning vs. defaults em problemas de otimização. A análise combina recursos de ELA (Evolutionary Landscape Analysis), metadados de desempenho e métricas estatísticas para comparar configurações em vários cenários.
+Este projeto avalia diferentes combinações de metadatasets, estratégias de tratamento de valores ausentes, limiares de correlação e algoritmos de aprendizado de máquina para classificar instâncias de tuning vs. defaults em problemas de otimização. A análise combina recursos de ELA (Exploratory Landscape Analysis), metadados de desempenho e métricas estatísticas para comparar configurações em vários cenários.
 
 ## O que o projeto faz
 
